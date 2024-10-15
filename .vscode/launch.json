@@ -1,0 +1,15 @@
+
+{
+    "version": "0.2.0",
+    "configurations": 
+    [
+
+      {
+        "name": "Principal",
+        "program": "lib/Principal/main.dart",
+        "request": "launch",
+        "type": "dart"
+      },
+      
+    ]
+  }

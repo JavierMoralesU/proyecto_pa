@@ -1,0 +1,252 @@
+import 'package:flutter/material.dart';
+import 'package:proyecto_pa/Modelo/Categoria.dart';
+import 'package:proyecto_pa/Utilidad/HiveCategorias.dart'; // Asegúrate de importar el archivo correcto de HiveCategorias
+
+class VCategoria extends StatefulWidget {
+  @override
+  _VCategoriaState createState() => _VCategoriaState();
+}
+
+class _VCategoriaState extends State<VCategoria> {
+  final HiveCategorias hiveCategorias = HiveCategorias(); // Instancia de HiveCategorias
+
+  List<Categoria> seleccionadas = [];
+
+  void toggleSeleccion(Categoria categoria) {
+    setState(() {
+      if (seleccionadas.contains(categoria)) {
+        seleccionadas.remove(categoria);
+      } else {
+        seleccionadas.add(categoria);
+      }
+    });
+  }
+
+  void eliminarSeleccionadas() async {
+    for (var categoria in seleccionadas) {
+      await hiveCategorias.eliminarCategoria(categoria.id); // Eliminar de Hive
+    }
+    setState(() 
+    {
+      seleccionadas.clear(); // Limpiar la lista de seleccionadas
+    });
+  }
+
+  @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      toolbarHeight: 80, // Aumentar la altura de la AppBar
+      backgroundColor: Color(0xff626AFF),
+      leading: Builder(
+        builder: (BuildContext context) {
+          return SizedBox(
+            width: 120, // Definir un ancho fijo con SizedBox
+            child: Container(
+              height: double.infinity, // Hacer que el contenedor ocupe toda la altura de la AppBar
+              color: Color(0xffFF8389), // Fondo rojo
+              child: IconButton(
+                iconSize: 40, // Aumentar el tamaño del botón del menú
+                icon: Icon(Icons.menu, color: Colors.black),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
+              ),
+            ),
+          );
+        },
+      ),
+      title: Row(
+        children: [
+          Spacer(), // Este elemento empuja el texto hacia el centro
+          Center(
+            child: Text(
+              'Categorías',
+              style: TextStyle(
+                fontSize: 28, // Hacer el texto más grande
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Spacer(), // Este elemento asegura que el texto esté centrado
+        ],
+      ),
+      elevation: 0, // Quitar la sombra de la AppBar
+    ),
+    drawer: Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Color(0xffFF8389),
+            ),
+            child: Text(
+              'Menú',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 30,
+              ),
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.shopping_cart),
+            title: Text('Venta'),
+            onTap: () {
+              // Acciones para navegar a la vista de ventas
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.inventory),
+            title: Text('Productos'),
+            onTap: () {
+              // Acciones para navegar a la vista de productos
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.category),
+            title: Text('Categorías'),
+            enabled: false, // Deshabilitado porque estás en la vista actual
+            onTap: () {},
+          ),
+          ListTile(
+            leading: Icon(Icons.exit_to_app),
+            title: Text('Salir'),
+            onTap: () {
+              // POP de el drawer y tambien de la pagina VCategoria
+              Navigator.pop(context); // ESTO CIERRA EL DRAWER
+              Navigator.pop(context); // ESTO CIERRA LA PAGINA
+            },
+          ),
+        ],
+      ),
+    ),
+    body: Container(
+      color: Color (0xffA6B4F9), // Fondo azul claro para el contenedor
+      child: Column(
+        children: [
+          // Parte 1.2: Cargar y mostrar la lista de categorías desde Hive
+          Expanded(
+            child: FutureBuilder<List<Categoria>>(
+              future: hiveCategorias.obtenerTodasCategorias(), // Obtener las categorías de Hive
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator()); // Indicador de carga
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error al cargar las categorías.')); // Manejo de error
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No hay categorías disponibles.')); // No hay datos
+                }
+
+                final categorias = snapshot.data!; // Lista de categorías obtenida
+
+                return ListView.builder(
+                  padding: EdgeInsets.all(8.0), // Padding alrededor de la lista
+                  itemCount: categorias.length,
+                  itemBuilder: (context, index) {
+                    final categoria = categorias[index];
+                    final isSelected = seleccionadas.contains(categoria); // Verificar si está seleccionada
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0), // Espaciado
+                      child: Row(
+                        children: 
+                        [
+                          // Columna 1: ID, Nombre, Descripción
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start, // Alinear al inicio
+                              children: [
+                                Row(
+                                  children: [
+                                    Text('ID: ${categoria.id}'), // Mostrar ID
+                                    SizedBox(width: 10), // Espacio entre ID y nombre
+                                    Text('Nombre: ${categoria.nombre}'), // Mostrar nombre
+                                  ],
+                                ),
+                                SizedBox(height: 5), // Espacio entre filas
+                                Text('Descripción: ${categoria.descripcion}'), // Mostrar descripción
+                              ],
+                            ),
+                          ), 
+                          
+                          // Columna 2: Botón para selección
+                          Column(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () => toggleSeleccion(categoria), // Acción de selección
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isSelected ? Colors.green : null, // Cambiar color si está seleccionada
+                                ),
+                                child: Text(isSelected ? 'Seleccionado' : 'Seleccionar'), // Texto del botón
+                              ),
+                            ],
+                          ), 
+                        ],
+                      ), 
+                    ); 
+                  },
+                ); 
+              },
+            ), 
+          ), 
+          // Parte 2: Botones
+            Container(
+            color: Color(0xff5A5CE2), // Color del contenedor de botones
+            padding: EdgeInsets.all(10), // Espaciado interno del contenedor
+            height: 150, // Aumentar la altura del contenedor
+            child: Column(
+              children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Espaciado entre botones
+                children: [
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(0), // Botones cuadrados
+                  ),
+                  minimumSize: Size(50, 50), // Tamaño mínimo cuadrado
+                  ),
+                  child: Icon(Icons.add), // Icono de agregar
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(0), // Botones cuadrados
+                  ),
+                  minimumSize: Size(50, 50), // Tamaño mínimo cuadrado
+                  ),
+                  child: Icon(Icons.edit), // Icono de editar
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(0), // Botones cuadrados
+                  ),
+                  minimumSize: Size(50, 50), // Tamaño mínimo cuadrado
+                  ),
+                  child: Icon(Icons.delete), // Icono de borrar
+                ),
+                ],
+              ),
+              SizedBox(height: 10), // Espacio entre filas
+              ElevatedButton(
+                onPressed: seleccionadas.isNotEmpty ? eliminarSeleccionadas : null,
+                style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50), // Botón ocupa todo el ancho
+                ),
+                child: Text('Eliminar seleccionados'), // Texto del botón
+              ),
+              ],
+            ), // Fin de Column (botones)
+            ), // Fin de Container (botones)
+        ],
+      ), // Fin de Column (body)
+    ), // Fin de Container
+  );
+  }
+}

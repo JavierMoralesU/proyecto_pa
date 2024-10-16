@@ -1,0 +1,81 @@
+import 'package:flutter/material.dart';
+import 'package:proyecto_pa/Modelo/Categoria.dart';
+
+
+class ACategorias extends StatefulWidget {
+  final Categoria? categoria;
+
+  ACategorias({Key? key, this.categoria}) : super(key: key);
+
+  @override
+  _ACategoriasState createState() => _ACategoriasState();
+}
+
+class _ACategoriasState extends State<ACategorias> {
+  late TextEditingController _idController;
+  late TextEditingController _nombreController;
+  late TextEditingController _descripcionController;
+
+  @override
+  void initState() 
+  {
+    super.initState();
+    _idController          = TextEditingController(text: widget.categoria?.id?.toString() ?? '');
+    _nombreController      = TextEditingController(text: widget.categoria?.nombre ?? '');
+    _descripcionController = TextEditingController(text: widget.categoria?.descripcion ?? '');
+  }
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _nombreController.dispose();
+    _descripcionController.dispose();
+    super.dispose();
+  }
+
+  void _guardarCategoria() 
+  {
+    Categoria nuevaCategoria = Categoria(
+      id: int.tryParse(_idController.text) ?? 0, 
+      nombre: _nombreController.text,
+      descripcion: _descripcionController.text,
+    );
+
+    print("Categoria Guardada: ${nuevaCategoria.nombre}");
+    Navigator.pop(context, nuevaCategoria);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.categoria == null ? 'Crear Categoria' : 'Editar Categoria'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _idController,
+              decoration: InputDecoration(labelText: 'ID'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: _nombreController,
+              decoration: InputDecoration(labelText: 'Nombre'),
+            ),
+            TextField(
+              controller: _descripcionController,
+              decoration: InputDecoration(labelText: 'Descripción'),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _guardarCategoria,
+              child: Text('Aceptar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

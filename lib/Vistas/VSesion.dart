@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:proyecto_pa/Modelo/User.dart';
 import 'package:proyecto_pa/Utilidad/Alerta.dart';
 import 'package:proyecto_pa/Utilidad/HiveUsuarios.dart';
-import 'package:proyecto_pa/Utilidad/UsuariosPage.dart';
-
+import 'package:proyecto_pa/Vistas/VCategoria';
 
 class VSesion extends StatefulWidget {
   const VSesion({super.key});
@@ -213,7 +212,6 @@ class _VSesionState extends State<VSesion> {
     {
           if (usuarioEncontrado.contrasena == contrasena) // Si la contraseña es correcta
           {
-            await Alerta.mostrar(context, 'Contraseña correcta.');
 
               Usuario nuevoUsuario = Usuario
               (
@@ -228,7 +226,8 @@ class _VSesionState extends State<VSesion> {
             {
             }
              await HiveUsuarios().actualizarUsuarioInicial(usuario: nuevoUsuario);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => UsuariosPage()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) =>  VCategoria  ()));
+              //CategoriasPage ()
           }   
           else 
           {

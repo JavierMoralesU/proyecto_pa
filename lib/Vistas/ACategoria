@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_pa/Modelo/Categoria.dart';
+import 'package:proyecto_pa/Utilidad/HiveCategorias.dart';
 
-
-class ACategorias extends StatefulWidget {
+class ACategoria extends StatefulWidget {
   final Categoria? categoria;
 
-  ACategorias({Key? key, this.categoria}) : super(key: key);
+  ACategoria({Key? key, this.categoria}) : super(key: key);
 
   @override
-  _ACategoriasState createState() => _ACategoriasState();
+  _ACategoriaState createState() => _ACategoriaState();
 }
 
-class _ACategoriasState extends State<ACategorias> {
+class _ACategoriaState extends State<ACategoria> {
   late TextEditingController _idController;
   late TextEditingController _nombreController;
   late TextEditingController _descripcionController;
+  late HiveCategorias _hiveCategorias; // Instancia de HiveCategorias
 
   @override
-  void initState() 
-  {
+  void initState() {
     super.initState();
-    _idController          = TextEditingController(text: widget.categoria?.id?.toString() ?? '');
-    _nombreController      = TextEditingController(text: widget.categoria?.nombre ?? '');
+    _hiveCategorias = HiveCategorias(); // Inicializa la clase para trabajar con Hive
+    _idController = TextEditingController(text: widget.categoria?.id?.toString() ?? '');
+    _nombreController = TextEditingController(text: widget.categoria?.nombre ?? '');
     _descripcionController = TextEditingController(text: widget.categoria?.descripcion ?? '');
   }
 
@@ -33,23 +34,35 @@ class _ACategoriasState extends State<ACategorias> {
     super.dispose();
   }
 
-  void _guardarCategoria() 
-  {
+  void _guardarCategoria() async {
     Categoria nuevaCategoria = Categoria(
-      id: int.tryParse(_idController.text) ?? 0, 
+      id: int.tryParse(_idController.text) ?? 0,
       nombre: _nombreController.text,
       descripcion: _descripcionController.text,
     );
 
-    print("Categoria Guardada: ${nuevaCategoria.nombre}");
-    Navigator.pop(context, nuevaCategoria);
+    if (widget.categoria == null) {
+      // Si estamos creando una nueva categoría
+      bool success = await _hiveCategorias.agregarCategoria(nuevaCategoria);
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: Ya existe una categoría con ese ID')),
+        );
+        return;
+      }
+    } else {
+      // Si estamos editando una categoría existente
+      await _hiveCategorias.actualizarCategoria(nuevaCategoria);
+    }
+
+    Navigator.pop(context, nuevaCategoria); // Regresar a la pantalla anterior
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.categoria == null ? 'Crear Categoria' : 'Editar Categoria'),
+        title: Text(widget.categoria == null ? 'Crear Categoría' : 'Editar Categoría'), // Ajusta el título según el caso
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

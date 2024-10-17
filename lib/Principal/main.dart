@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:proyecto_pa/Modelo/Categoria.dart';
 import 'package:proyecto_pa/Modelo/User.dart';
-import 'package:proyecto_pa/Vistas/VCategoria';
 import 'package:proyecto_pa/Vistas/VSesion.dart';
 
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:proyecto_pa/Modelo/Categoria.dart';
 import 'package:proyecto_pa/Utilidad/HiveCategorias.dart'; // Asegúrate de importar el archivo correcto de HiveCategorias
 import 'package:proyecto_pa/Vistas/ACategoria';
+import 'package:proyecto_pa/Utilidad/Preguntar.dart';
 
 
 class VCategoria extends StatefulWidget {
@@ -10,16 +11,14 @@ class VCategoria extends StatefulWidget {
 }
 
 class _VCategoriaState extends State<VCategoria> {
-  final HiveCategorias hiveCategorias = HiveCategorias(); // Instancia de HiveCategorias
-  final ScrollController _scrollController = ScrollController(); // Controlador de scroll
-
+  final HiveCategorias hiveCategorias = HiveCategorias();
+  final ScrollController _scrollController = ScrollController();
 
   List<Categoria> seleccionadas = [];
+  double _scrollOffset = 0; // Variable para guardar la posición del scroll
 
-  void toggleSeleccion(Categoria categoria) 
-  {
-    setState(() 
-    {
+  void toggleSeleccion(Categoria categoria) {
+    setState(() {
       if (seleccionadas.contains(categoria)) {
         seleccionadas.remove(categoria);
       } else {
@@ -28,15 +27,35 @@ class _VCategoriaState extends State<VCategoria> {
     });
   }
 
-  void eliminarSeleccionadas() async {
-    for (var categoria in seleccionadas) {
-      await hiveCategorias.eliminarCategoria(categoria.id); // Eliminar de Hive
-    }
-    setState(() 
+  void eliminarSeleccionadas(BuildContext context) async 
+  {
+  // Pregunta al usuario si está seguro de eliminar las categorías seleccionadas
+  bool? confirmacion = await Preguntar.mostrarConfirmacionEliminar(context, seleccionadas);
+
+  if (confirmacion == true)
+  {
+    for (var categoria in seleccionadas) 
     {
-      seleccionadas.clear(); // Limpiar la lista de seleccionadas
+      await hiveCategorias.eliminarCategoria(categoria.id);
+    }
+    setState(() {seleccionadas.clear(); });
+  } else { print('Eliminación cancelada');}
+}
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      _scrollOffset = _scrollController.offset; // Guardar la posición actual del scroll
     });
   }
+
+  @override
+  void dispose() {
+    _scrollController.dispose(); // Limpiar el controlador
+    super.dispose();
+  }
+
 
   @override
 Widget build(BuildContext context) {
@@ -151,6 +170,10 @@ Widget build(BuildContext context) {
                 }
 
                 final categorias = snapshot.data!; // Lista de categorías obtenida
+                 WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _scrollController.jumpTo(_scrollOffset); // Restaura la posición del scroll
+                  });
+
 
                 return ListView.builder
                 (
@@ -273,15 +296,15 @@ Widget build(BuildContext context) {
                 children: [
                 ElevatedButton(
                   onPressed: () async {
-    // Navegar a la página de agregar categorías y esperar su retorno
-    await Navigator.push(
-      context, 
-      MaterialPageRoute(builder: (context) => ACategoria()),
-    );
+                  // Navegar a la página de agregar categorías y esperar su retorno
+                  await Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => ACategoria()),
+                  );
 
-    // Una vez que regresas de la pantalla ACategoria, recargas la lista de categorías
-    setState(() {});
-  },
+                  // Una vez que regresas de la pantalla ACategoria, recargas la lista de categorías
+                  setState(() {});
+                  },
                   style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(0), 
@@ -290,8 +313,9 @@ Widget build(BuildContext context) {
                   ),
                   child: Icon(Icons.add), // Icono de agregar
                 ),
+
                 ElevatedButton(
-  onPressed: seleccionadas.isNotEmpty ? eliminarSeleccionadas : null, // Habilitar solo si hay seleccionadas
+  onPressed: seleccionadas.isNotEmpty ? () => eliminarSeleccionadas(context) : null, // Habilitar solo si hay seleccionadas
   style: ElevatedButton.styleFrom(
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(0), // Botones cuadrados

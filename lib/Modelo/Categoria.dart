@@ -13,11 +13,13 @@ class Categoria extends HiveObject {
   @HiveField(2)
   String descripcion;
 
+  // Constructor
   Categoria({
     required this.id,
-    required this.nombre,
-    required this.descripcion,
-  });
+    String? nombre,
+    String? descripcion,
+  })  : nombre = nombre ?? 'c$id', // Si nombre es nulo, usa 'c{id}'
+        descripcion = descripcion ?? '...'; // Si descripcion es nulo, usa '...'
 
   @override
   String toString() {
